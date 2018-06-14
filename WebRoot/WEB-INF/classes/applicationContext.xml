@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans
+		xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	 http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	 http://www.springframework.org/schema/context
+	 http://www.springframework.org/schema/context/spring-context-3.0.xsd
+	 http://www.springframework.org/schema/tx
+	 http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+	 http://www.springframework.org/schema/aop
+	 http://www.springframework.org/schema/aop/spring-aop-3.0.xsd">
+    
+    <!-- 启用spring注解 -->
+    <context:annotation-config></context:annotation-config>
+    <!-- 组件扫描 -->
+    <context:component-scan base-package="com.sc"></context:component-scan>
+    
+<!-- 添加数据源 -->
+	<bean id="dataSource"
+		class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName"
+			value="com.mysql.jdbc.Driver">
+		</property>
+		<property name="url"
+			value="jdbc:mysql://localhost:3306/bus_analy?useUnicode=true&amp;characterEncoding=utf8">
+		</property>
+		<property name="username" value="root"></property>
+		<property name="password" value="root"></property>
+	</bean>
+	
+	<!-- 配置session工厂 采用注解方式配置hibernate -->
+	<bean id="sessionFactory" class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+	   <!-- 注入数据源 -->
+	   <property name="dataSource" ref="dataSource"></property>
+	   <!-- 自身属性 -->
+	   <property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">
+					org.hibernate.dialect.MySQLDialect
+				</prop>
+				<prop key="hibernate.show_sql">true</prop>
+				<prop key="hibernate.format_sql">true</prop>
+				<prop key="hibernate.hbm2ddl.auto">update</prop>
+			</props>
+		</property>
+		<!-- 映射信息(自动扫描包里面的实体类) -->
+		<property name="packagesToScan">
+		   <value>com.sc.entity</value>
+		</property>
+	</bean>
+
+<bean id="hibernateTemplate" class="org.springframework.orm.hibernate3.HibernateTemplate">
+<property name="sessionFactory" ref="sessionFactory"></property>
+</bean>
+
+
+
+
+<!-- 第一步：配置事务管理器  -->
+	<bean id="txManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
+	   <property name="sessionFactory" ref="sessionFactory"></property>
+	</bean>
+
+
+<!-- 第二步：配置事务通知 -->
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+	    <tx:attributes>  
+	       <tx:method name="select*" propagation="NOT_SUPPORTED" read-only="true"/>
+	       <tx:method name="query*" propagation="NOT_SUPPORTED" read-only="true"/>
+	       <tx:method name="get*" propagation="NOT_SUPPORTED" read-only="true"/>
+	       <tx:method name="find*" propagation="NOT_SUPPORTED" read-only="true"/>
+	       <tx:method name="*" propagation="REQUIRED" read-only="false" isolation="DEFAULT"/>
+	    </tx:attributes>
+	</tx:advice>
+	
+	
+<!-- spring mvc配置 -->
+	<!-- 第一步：配置 默认注解处理器映射器，作用：负责找到对应的controller类 -->
+    <bean class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping"></bean>
+	<!-- 第二步：配置 注解方法处理器适配器 ，作用：负责找到对应的请求方法-->
+	<bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"></bean>
+	
+<!-- 第三步：配置 内部资源视图解析器 -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	    <!-- 使用jsp视图技术（也支持其他） -->
+	    <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"></property>
+	    <property name="prefix" value="/"></property>
+	    <property name="suffix" value=".jsp"></property>
+	</bean>
+
+
+</beans>
